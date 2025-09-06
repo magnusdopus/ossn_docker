@@ -24,14 +24,15 @@ This will build the web container and start both web and database containers.
 ```
 docker-compose up --build -d
 ```
-* Make sure port 80 allowed by ufw
-    ```
-      sudo ufw allow 80/tcp
-      sudo ufw reload
-    ```
-* The OSSN web app will be available at `http://localhost` (or your server IP) or visit FQDN that points to your server IP example http://yourwebsite.com/
-* MySQL database is preconfigured for OSSN with environment variables set in `docker-compose.yml`
-* Follow the instructions and leave the pre-filled fields unchanged.
+
+Make sure port 80 allowed by ufw
+```
+sudo ufw allow 80/tcp
+sudo ufw reload
+ ```
+- The OSSN web app will be available at `http://localhost` (or your server IP) or visit FQDN that points to your server IP example http://yourwebsite.com/
+- MySQL database is preconfigured for OSSN with environment variables set in `docker-compose.yml`
+- Follow the instructions and leave the pre-filled fields unchanged.
 
 ### 3. Stop the containers
 
