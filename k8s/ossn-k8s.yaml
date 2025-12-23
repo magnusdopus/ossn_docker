@@ -1,0 +1,114 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: ossn-db-secret
+type: Opaque
+stringData:
+  mysql-root-password: rootpassword
+  mysql-database: ossndb
+  mysql-user: ossnuser
+  mysql-password: ossnpassword
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: ossn-data-pvc
+spec:
+  accessModes: ["ReadWriteOnce"]
+  resources:
+    requests:
+      storage: 1Gi
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ossn-web
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ossn-web
+  template:
+    metadata:
+      labels:
+        app: ossn-web
+    spec:
+      containers:
+        - name: ossn-web
+          # Replace this image with a registry image or load locally into your cluster
+          image: ossn:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 80
+          env:
+            - name: OSSN_DATA
+              value: /var/www/ossn_data
+            - name: MYSQL_HOST
+              value: 127.0.0.1
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: ossn-db-secret
+                  key: mysql-root-password
+            - name: MYSQL_DATABASE
+              valueFrom:
+                secretKeyRef:
+                  name: ossn-db-secret
+                  key: mysql-database
+            - name: MYSQL_USER
+              valueFrom:
+                secretKeyRef:
+                  name: ossn-db-secret
+                  key: mysql-user
+            - name: MYSQL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: ossn-db-secret
+                  key: mysql-password
+            - name: CLOUDSQL_CONNECTION_NAME
+              value: "YOUR_PROJECT:REGION:INSTANCE"
+          volumeMounts:
+            - name: ossn-data
+              mountPath: /var/www/ossn_data
+            - name: html-storage
+              mountPath: /var/www/html
+            - name: cloudsql-instance-credentials
+              mountPath: /secrets/cloudsql
+              readOnly: true
+        - name: cloudsql-proxy
+          image: gcr.io/cloudsql-docker/gce-proxy:1.41.0
+          args:
+            - "/cloud_sql_proxy"
+            - "-instances=$(CLOUDSQL_CONNECTION_NAME)=tcp:3306"
+            - "-credential_file=/secrets/cloudsql/credentials.json"
+          env:
+            - name: CLOUDSQL_CONNECTION_NAME
+              value: "YOUR_PROJECT:REGION:INSTANCE"
+          volumeMounts:
+            - name: cloudsql-instance-credentials
+              mountPath: /secrets/cloudsql
+              readOnly: true
+      volumes:
+        - name: ossn-data
+          persistentVolumeClaim:
+            claimName: ossn-data-pvc
+        - name: html-storage
+          emptyDir: {}
+        - name: cloudsql-instance-credentials
+          secret:
+            secretName: cloudsql-sa-key
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ossn-web
+spec:
+  selector:
+    app: ossn-web
+  ports:
+    - port: 80
+      targetPort: 80
+  type: LoadBalancer

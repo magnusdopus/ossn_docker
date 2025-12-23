@@ -1,7 +1,7 @@
 services:
   web:
     build:
-      context: https://github.com/opensource-socialnetwork/docker.git
+      context: .
     ports:
       - "80:80"
     volumes:
