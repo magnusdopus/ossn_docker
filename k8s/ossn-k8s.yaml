@@ -2,6 +2,7 @@ apiVersion: v1
 kind: Secret
 metadata:
   name: ossn-db-secret
+  namespace: ossn
 type: Opaque
 stringData:
   mysql-root-password: rootpassword
@@ -14,6 +15,7 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: ossn-data-pvc
+  namespace: ossn
 spec:
   accessModes: ["ReadWriteOnce"]
   resources:
@@ -25,6 +27,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: ossn-web
+  namespace: ossn
 spec:
   replicas: 1
   selector:
@@ -35,10 +38,11 @@ spec:
       labels:
         app: ossn-web
     spec:
+      serviceAccountName: ossn-ksa
       containers:
         - name: ossn-web
-          # Replace this image with a registry image or load locally into your cluster
-          image: ossn:latest
+          # Replace this image with your Artifact Registry image
+          image: YOUR_REGION-docker.pkg.dev/YOUR_PROJECT/ossn-repo/ossn:latest
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 80
@@ -105,6 +109,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: ossn-web
+  namespace: ossn
 spec:
   selector:
     app: ossn-web

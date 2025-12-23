@@ -23,6 +23,8 @@ services:
       MYSQL_DATABASE: ossndb
       MYSQL_USER: ossnuser
       MYSQL_PASSWORD: ossnpassword
+    ports:
+      - "3306:3306"
     volumes:
       - db_data:/var/lib/mysql
     restart: unless-stopped
